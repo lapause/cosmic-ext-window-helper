@@ -1,0 +1,12 @@
+{
+   "version": "0.2.0",
+   "configurations": [
+      {
+         "name": "Debug Wayland events",
+         "type": "debugpy",
+         "request": "launch",
+         "module": "cosmic_ext_window_helper",
+         "args": ["debug"]
+      }
+   ]
+}
