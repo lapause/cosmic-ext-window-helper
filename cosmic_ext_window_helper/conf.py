@@ -2,7 +2,7 @@ import os
 import logging
 
 __appname__ = "cosmic-ext-window-helper"
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __description__ = (
     "Utility interacting with COSMIC™ Wayland compositor to provide easy scriptable access "
     "to toplevel windows, allowing shortcut-triggerable custom actions: run-or-raise, batch hiding or closing..."
