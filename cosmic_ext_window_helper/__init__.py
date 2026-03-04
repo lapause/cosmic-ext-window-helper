@@ -413,8 +413,12 @@ class Helper:
                 match op:
                     case "=":
                         res = field == value
+                        if re_flags == re.IGNORECASE:
+                            res = res | (field.lower() == value.lower())
                     case "!=":
                         res = field != value
+                        if re_flags == re.IGNORECASE:
+                            res = res & (field.lower() != value.lower())
                     case "~=":
                         res = bool(re.search(re.compile(value, re_flags), field))
                 return res if neg.text == "" else not res
