@@ -67,15 +67,15 @@ Use the command `cosmic-ext-window-helper state` to return current windows infor
 - `is_minimized`: Is the window currently minimized?
 - `is_fullscreen`: Is the window currently fullscreen?
 - `is_sticky`: Is the window currently sticky?
-- `workspace.name`: COSMIC name of the window workspace, currently a number starting at 1 corresponding to the workspace position (global or per display depending on your configuration)
+- `workspace.name`: COSMIC™ name of the window workspace, currently a number starting at 1 corresponding to the workspace position (global or per display depending on your configuration)
 - `workspace.visible`: Is the window workspace visible?
 - `workspace.has_focus`: Does the window workspace also contains the active window?
-- `output.name`: COSMIC unique name of the window display, usually a combination of display protocol and a number (e.g. `HDMI-1`, `DP-2`...) Predictable while your display connections remain the same.
+- `output.name`: COSMIC™ unique name of the window display, usually a combination of display protocol and a number (e.g. `HDMI-1`, `DP-2`...) Predictable while your display connections remain the same.
 - `output.has_focus`: Does the window display also contains the active window?
 
 ### Query syntax
 
-To be the most flexible, the program commands use a `QUERY` argument to target toplevel windows. the query grammar supports:
+To be the most flexible, the program commands use a `QUERY` argument to target toplevel windows. The query grammar supports:
 - String field tests:
   - Syntax: `FIELD OPERATOR VALUE`
   - Available fields: `id`, `app_id`, `title`, `workspace.name`, `output.name`

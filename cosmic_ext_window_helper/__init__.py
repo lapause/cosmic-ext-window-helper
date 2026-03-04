@@ -87,15 +87,15 @@ class Workspace(wayland.ext_workspace_handle_v1):
         self.state = state
 
     @property
-    def is_visible(self):
+    def is_visible(self) -> bool:
         return self.state == Helper.WORKSPACE_ACTIVE
 
     @property
-    def has_focus(self):
+    def has_focus(self) -> bool:
         return Helper.active_toplevel is not None and Helper.active_toplevel.workspace == self
 
     @property
-    def output(self):
+    def output(self) -> Output:
         return self.group.output
 
     def keys(self) -> list:
@@ -248,7 +248,7 @@ class Toplevel:
         else:
             Helper.toplevel_manager.unset_sticky(self.cosmic_handle)
 
-    def move_to(self, workspace: Workspace, output: Output):
+    def move_to(self, workspace: Workspace, output: Output) -> None:
         Helper.toplevel_manager.move_to_ext_workspace(self.cosmic_handle, workspace, output)
 
     def __getattr__(self, name: str) -> Any:
