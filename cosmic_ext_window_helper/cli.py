@@ -231,6 +231,7 @@ class CLI(object):
 
         # Handling standard actions
         self.helper = Helper()
+        toplevels = None
         if hasattr(args, "query"):
             try:
                 toplevels = self.helper.match_toplevels(args.query)
@@ -241,7 +242,7 @@ class CLI(object):
                 sys.exit(10)
         match args.action:
             case "state" | "list":
-                print(json.dumps(self.helper.state(toplevels if args.action == "list" else None), indent=2))
+                print(json.dumps(self.helper.state(toplevels), indent=2))
             case "activate" | "close":
                 toplevels.reverse()
                 for toplevel in toplevels:

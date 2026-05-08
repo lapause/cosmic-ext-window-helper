@@ -258,7 +258,7 @@ class Toplevel:
             case "is_active":
                 return Helper.TOPLEVEL_ACTIVATED in self.cosmic_handle.states
             case "is_active_app_id":
-                return Helper.active_toplevel.app_id == self.app_id
+                return Helper.active_toplevel is not None and Helper.active_toplevel.app_id == self.app_id
             case "is_maximized":
                 return Helper.TOPLEVEL_MAXIMIZED in self.cosmic_handle.states
             case "is_minimized":
