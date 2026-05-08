@@ -217,7 +217,7 @@ class CLI(object):
                 if os.path.exists(self._pidfile()):
                     with open(self._pidfile()) as f:
                         pid = int(f.read().strip())
-                    os.popen(f"kill -USR1 {pid}")
+                    os.kill(pid, signal.SIGUSR1)
                     sys.exit(0)
             case "debug":
                 logger.info("Listening to events from Wayland...")
