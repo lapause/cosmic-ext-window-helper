@@ -138,6 +138,11 @@ class CLI(object):
             type=int,
             help="Time to wait for signal from another instance."
         )
+        cycle.add_argument(
+            "-b", "--backward",
+            action="store_true",
+            help="Cycle to previous match instead of next one."
+        )
 
         # Development commands definitions
         self.commands.add_parser("debug", add_help=False)
@@ -216,7 +221,8 @@ class CLI(object):
                 if os.path.exists(self._pidfile()):
                     with open(self._pidfile()) as f:
                         pid = int(f.read().strip())
-                    os.popen(f"kill -USR1 {pid}")
+                    sig = "USR2" if args.backward else "USR1"
+                    os.popen(f"kill -{sig} {pid}")
                     sys.exit(0)
             case "debug":
                 logger.info("Listening to events from Wayland...")
@@ -253,22 +259,29 @@ class CLI(object):
                     if not self.cycling_toplevels:
                         sys.exit(0)
                     self.cycling_toplevels.append(active)
+                elif args.backward:
+                    self.cycling_toplevels.append(self.cycling_toplevels.pop(0))
 
                 def signal_handler(sig_num, curr_stack_frame):
                     pass
 
                 signal.signal(signal.SIGUSR1, signal_handler)
+                signal.signal(signal.SIGUSR2, signal_handler)
                 with open(self._pidfile(), "w") as f:
                     f.write(str(os.getpid()))
+                backward = args.backward
                 while True:
-                    toplevel = self.cycling_toplevels.pop(0)
-                    self.cycling_toplevels.append(toplevel)
-                    toplevel.activate()
-                    sig = signal.sigtimedwait([signal.SIGUSR1], args.timeout)
+                    if backward:
+                        self.cycling_toplevels.insert(0, self.cycling_toplevels.pop())
+                    else:
+                        self.cycling_toplevels.append(self.cycling_toplevels.pop(0))
+                    self.cycling_toplevels[-1].activate()
+                    sig = signal.sigtimedwait([signal.SIGUSR1, signal.SIGUSR2], args.timeout)
                     if sig is None:
                         if os.path.exists(self._pidfile()):
                             os.remove(self._pidfile())
                         break
+                    backward = (sig.si_signo == signal.SIGUSR2)
             case "minimize" | "maximize" | "fullscreen" | "sticky":
                 for toplevel in toplevels:
                     getattr(toplevel, args.action)(self.to_bool(args.toggle))
