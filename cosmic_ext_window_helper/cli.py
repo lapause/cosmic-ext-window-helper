@@ -211,6 +211,7 @@ class CLI(object):
             logger.addHandler(logfile)
 
         # Handling actions not needing standard connection with compositor
+        debug = False
         match args.action:
             case "cycle":
                 if os.path.exists(self._pidfile()):
@@ -223,14 +224,16 @@ class CLI(object):
                 logger.info(
                     f"Execute `{__appname__} debugger` in another terminal to monitor them")
                 logger.info("Press <Ctrl-C> to stop execution.")
-                self.helper = Helper(debug=True)
+                debug = True
             case "debugger":
                 Helper.debugger()
+                sys.exit(0)
             case "update-protocols":
                 Helper.update_protocols()
+                sys.exit(0)
 
         # Handling standard actions
-        self.helper = Helper()
+        self.helper = Helper(debug=debug)
         toplevels = None
         if hasattr(args, "query"):
             try:

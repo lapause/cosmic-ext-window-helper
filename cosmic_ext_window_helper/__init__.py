@@ -508,5 +508,4 @@ class Helper:
         )
         if os.path.exists(resource_path("__init__.pyi")):
             os.remove(resource_path("__init__.pyi"))
-        logger.info("Local protocols.json has been updated, exiting.")
-        sys.exit(0)
+        logger.info("Local protocols.json has been updated.")
