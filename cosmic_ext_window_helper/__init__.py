@@ -75,7 +75,7 @@ class Workspace(wayland.ext_workspace_handle_v1):
     state: wayland.ext_workspace_handle_v1.state
 
     def __init__(self, object_id: int = None):
-        if object_id:
+        if object_id is not None:
             self._remote_object_id = object_id
         super().__init__()
         self.name = self.group = self.state = None
@@ -109,10 +109,10 @@ class Workspace(wayland.ext_workspace_handle_v1):
 class WorkspaceGroup(wayland.ext_workspace_group_handle_v1):
     _remote_object_id: int
     output: Output
-    workspaces: dict[Workspace]
+    workspaces: dict[int, Workspace]
 
     def __init__(self, object_id: int = None):
-        if object_id:
+        if object_id is not None:
             self._remote_object_id = object_id
         super().__init__()
         self.output = None
@@ -168,7 +168,7 @@ class ToplevelHandle(wayland.ext_foreign_toplevel_handle_v1):
     done: bool
 
     def __init__(self, object_id=None):
-        if object_id:
+        if object_id is not None:
             self._remote_object_id = object_id
         super().__init__()
         self.id = self.app_id = self.title = None
@@ -272,7 +272,12 @@ class Toplevel:
             case "output":
                 return self.cosmic_handle.workspace.output if self.cosmic_handle.workspace else None
             case _:
-                return self.__dict__[name]
+                try:
+                    return self.__dict__[name]
+                except KeyError:
+                    raise AttributeError(
+                        f"'{type(self).__name__}' object has no attribute '{name}'"
+                    ) from None
 
     def keys(self) -> list:
         return [
@@ -310,11 +315,11 @@ class Helper:
     toplevel_manager: wayland.zcosmic_toplevel_manager_v1 = None
     workspace_manager: WorkspaceManager = None
 
-    outputs: dict[Output] = {}
+    outputs: dict[int, Output] = {}
     seat: wayland.wl_seat = None
-    workspaces: dict[Workspace] = {}
-    workspaces_groups: dict[WorkspaceGroup] = {}
-    toplevels: dict[Toplevel] = {}
+    workspaces: dict[int, Workspace] = {}
+    workspaces_groups: dict[int, WorkspaceGroup] = {}
+    toplevels: dict[int, Toplevel] = {}
     active_toplevel: Toplevel = None
 
     def __init__(self, debug: bool = False):
@@ -403,6 +408,7 @@ class Helper:
                         field = ""
                 else:
                     field = self.toplevel[field]
+                field = field or ""
                 op = op.text.strip()
                 if value.text[-1] == "i":
                     value = value.text[1:-2]
@@ -412,13 +418,15 @@ class Helper:
                     value = value.text[1:-1]
                 match op:
                     case "=":
-                        res = field == value
                         if re_flags == re.IGNORECASE:
-                            res = res | (field.lower() == value.lower())
+                            res = field.lower() == value.lower()
+                        else:
+                            res = field == value
                     case "!=":
-                        res = field != value
                         if re_flags == re.IGNORECASE:
-                            res = res & (field.lower() != value.lower())
+                            res = field.lower() != value.lower()
+                        else:
+                            res = field != value
                     case "~=":
                         res = bool(re.search(re.compile(value, re_flags), field))
                 return res if neg.text == "" else not res

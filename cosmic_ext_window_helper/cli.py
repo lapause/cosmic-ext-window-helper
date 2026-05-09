@@ -11,7 +11,7 @@ from cosmic_ext_window_helper.conf import logger, __version__, __appname__, __de
 from cosmic_ext_window_helper.exceptions import HelperError
 
 
-class CLI(object):
+class CLI:
     """CLI usage of cosmic-ext-window-helper."""
     info_handler: logging.StreamHandler
     error_handler: logging.StreamHandler
@@ -200,9 +200,10 @@ class CLI(object):
 
         # Registering logfile if enabled
         if hasattr(args, "log") and args.log:
+            log_dir = os.path.dirname(args.log) or "."
             if (
                 (os.path.exists(args.log) and not os.access(args.log, os.W_OK)) or
-                (not os.path.exists(args.log) and not os.access(os.path.dirname(args.log), os.W_OK))
+                not os.access(log_dir, os.W_OK)
             ):
                 logger.error(f"You don't have permission to write on {args.log}")
                 sys.exit(1)

@@ -34,15 +34,15 @@ Use `state` command to see what current windows information looks like.
 
 2) boolean fields tests: FIELD
    Available fields:
-     is_active:           window has focus
-     is_active_app_id:    window app_id is the same as the active window one
-     is_maximized:        window is currently maximized
-     is_minimized:        window is currently minimized
-     is_fullscreen:       window is currently fullscreen
-     is_sticky:           window is currently sticky
-     workspace.visible:   window is in a visible workspace
-     workspace.has_focus: workspace the window is in also contains the active window
-     output.has_focus:    display the window is in also contains the active window
+     is_active:            window has focus
+     is_active_app_id:     window app_id is the same as the active window one
+     is_maximized:         window is currently maximized
+     is_minimized:         window is currently minimized
+     is_fullscreen:        window is currently fullscreen
+     is_sticky:            window is currently sticky
+     workspace.is_visible: window is in a visible workspace
+     workspace.has_focus:  workspace the window is in also contains the active window
+     output.has_focus:     display the window is in also contains the active window
 
 3) Negation, logical operators and groups
    - tests can be combined with 'and' and 'or' operators
