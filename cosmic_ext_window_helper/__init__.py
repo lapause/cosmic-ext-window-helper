@@ -2,7 +2,6 @@ import argparse
 import os
 import re
 import regex
-import sys
 from typing import Any
 from importlib.util import find_spec
 from modshim import shim
@@ -11,7 +10,8 @@ from parsimonious.grammar import Grammar
 from cosmic_ext_window_helper.conf import logger, resource_path
 from cosmic_ext_window_helper.exceptions import HelperError
 
-shim(lower="wayland.client.package", upper="cosmic_ext_window_helper.wayland.package", mount="wayland.client.package")
+shim(lower="wayland.client.package",
+     upper="cosmic_ext_window_helper.wayland.package", mount="wayland.client.package")
 shim(lower="wayland.proxy", upper="cosmic_ext_window_helper.wayland.proxy", mount="wayland.proxy")
 import wayland  # noqa: E402
 from wayland.client import is_wayland  # noqa: E402
@@ -259,7 +259,11 @@ class Toplevel:
             case "is_active":
                 return Helper.TOPLEVEL_ACTIVATED in self.cosmic_handle.states
             case "is_active_app_id":
-                return Helper.active_toplevel is not None and Helper.active_toplevel.app_id == self.app_id
+                return (
+                    Helper.active_toplevel is not None and
+                    self.app_id and
+                    Helper.active_toplevel.app_id == self.app_id
+                )
             case "is_maximized":
                 return Helper.TOPLEVEL_MAXIMIZED in self.cosmic_handle.states
             case "is_minimized":
