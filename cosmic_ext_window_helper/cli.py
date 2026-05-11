@@ -1,4 +1,5 @@
 import argparse
+import fcntl
 import json
 import logging
 import os
@@ -220,11 +221,19 @@ class CLI:
         debug = False
         match args.action:
             case "cycle":
-                if os.path.exists(self._pidfile()):
-                    with open(self._pidfile()) as f:
-                        pid = int(f.read().strip())
-                    os.kill(pid, signal.SIGUSR2 if args.backward else signal.SIGUSR1)
+                pidfile = os.open(self._pidfile(), os.O_RDWR | os.O_CREAT, 0o644)
+                try:
+                    fcntl.flock(pidfile, fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except BlockingIOError:
+                    try:
+                        pid = int(os.read(pidfile, 32).decode().strip())
+                        os.kill(pid, signal.SIGUSR2 if args.backward else signal.SIGUSR1)
+                    except (ValueError, ProcessLookupError):
+                        pass
                     sys.exit(0)
+                signal.pthread_sigmask(signal.SIG_BLOCK, [signal.SIGUSR1, signal.SIGUSR2])
+                os.ftruncate(pidfile, 0)
+                os.write(pidfile, str(os.getpid()).encode())
             case "debug":
                 logger.info("Listening to events from Wayland...")
                 logger.info(
@@ -265,14 +274,6 @@ class CLI:
                     self.cycling_toplevels.append(active)
                 elif args.backward:
                     self.cycling_toplevels.append(self.cycling_toplevels.pop(0))
-
-                def signal_handler(sig_num, curr_stack_frame):
-                    pass
-
-                signal.signal(signal.SIGUSR1, signal_handler)
-                signal.signal(signal.SIGUSR2, signal_handler)
-                with open(self._pidfile(), "w") as f:
-                    f.write(str(os.getpid()))
                 backward = args.backward
                 while True:
                     if backward:
@@ -282,8 +283,6 @@ class CLI:
                     self.cycling_toplevels[-1].activate()
                     sig = signal.sigtimedwait([signal.SIGUSR1, signal.SIGUSR2], args.timeout)
                     if sig is None:
-                        if os.path.exists(self._pidfile()):
-                            os.remove(self._pidfile())
                         break
                     backward = (sig.si_signo == signal.SIGUSR2)
             case "minimize" | "maximize" | "fullscreen" | "sticky":
