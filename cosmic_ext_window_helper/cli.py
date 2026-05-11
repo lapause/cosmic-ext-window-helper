@@ -30,7 +30,7 @@ class CLI:
 
     def _init_logs_handlers(self) -> None:
         """Configure log output in CLI usage."""
-        self.info_handler = logging.StreamHandler(sys.stdout)
+        self.info_handler = logging.StreamHandler(sys.stderr)
         self.info_handler.setLevel(logging.INFO)
         self.info_handler.addFilter(lambda x: x.levelno < logging.WARNING)
         self.error_handler = logging.StreamHandler()
@@ -206,14 +206,11 @@ class CLI:
 
         # Registering logfile if enabled
         if hasattr(args, "log") and args.log:
-            log_dir = os.path.dirname(args.log) or "."
-            if (
-                (os.path.exists(args.log) and not os.access(args.log, os.W_OK)) or
-                not os.access(log_dir, os.W_OK)
-            ):
-                logger.error(f"You don't have permission to write on {args.log}")
+            try:
+                logfile = logging.FileHandler(args.log)
+            except OSError as e:
+                logger.error(f"Unable to write to log file '{args.log}': {e.strerror}")
                 sys.exit(1)
-            logfile = logging.FileHandler(args.log)
             logfile.setLevel(logging.INFO)
             logger.addHandler(logfile)
 
