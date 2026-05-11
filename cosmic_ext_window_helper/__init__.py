@@ -300,6 +300,117 @@ class Toplevel:
         return self.__getattr__(key)
 
 
+_QUERY_GRAMMAR = Grammar(
+    r"""
+    expr           = (str_test / bool_test / block) (lop (str_test / bool_test / block))*
+    block          = neg? "(" ws expr ws ")"
+    bool_test      = neg? bool_field
+    str_test       = neg? str_field op value
+    op             = ws ("~=" / "!=" / "=") ws
+    str_field      = ~"(app_)?id|title|(output|workspace)\\.name"
+    bool_field     = ~"is_(active(_app_id)?|(min|max)imized|fullscreen|sticky)|output\\.has_focus|workspace\\.(is_visible|has_focus)"
+    value          = single_quoted / double_quoted
+    lop            = ws ("and" / "or") ws
+    neg            = ws "not" ws
+    ws             = ~"\\s*"
+    single_quoted  = ~"'(.*?)(?<!\\\\)'i?"
+    double_quoted  = ~'"(.*?)(?<!\\\\)"i?'
+    """
+)
+
+
+class _ExpressionVisitor(NodeVisitor):
+    toplevel: Toplevel
+
+    def __init__(self, toplevel: Toplevel):
+        self.toplevel = toplevel
+
+    def generic_visit(self, node, children):
+        return children or node
+
+    def visit_str_test(self, node, _):
+        neg, field, op, value = node.children
+        field = field.text
+        if field.startswith("output."):
+            if self.toplevel.output:
+                field = self.toplevel.output[field.split(".")[1]]
+            else:
+                field = ""
+        elif field.startswith("workspace."):
+            if self.toplevel.workspace:
+                field = self.toplevel.workspace[field.split(".")[1]]
+            else:
+                field = ""
+        else:
+            field = self.toplevel[field]
+        field = field or ""
+        op = op.text.strip()
+        quote = value.text[0]
+        if value.text[-1] == "i":
+            value = value.text[1:-2]
+            re_flags = re.IGNORECASE
+        else:
+            re_flags = 0
+            value = value.text[1:-1]
+        value = value.replace("\\" + quote, quote)
+        match op:
+            case "=":
+                if re_flags == re.IGNORECASE:
+                    res = field.lower() == value.lower()
+                else:
+                    res = field == value
+            case "!=":
+                if re_flags == re.IGNORECASE:
+                    res = field.lower() != value.lower()
+                else:
+                    res = field != value
+            case "~=":
+                try:
+                    res = bool(regex.search(value, field, flags=re_flags, timeout=0.5))
+                except TimeoutError:
+                    res = False
+        return res if neg.text == "" else not res
+
+    def visit_bool_test(self, node, _):
+        neg, field = node.children
+        field = field.text
+        if field.startswith("output."):
+            if self.toplevel.output:
+                field = self.toplevel.output[field.split(".")[1]]
+            else:
+                field = False
+        elif field.startswith("workspace."):
+            if self.toplevel.workspace:
+                field = self.toplevel.workspace[field.split(".")[1]]
+            else:
+                field = False
+        else:
+            field = self.toplevel[field]
+        return field if neg.text == "" else not field
+
+    def visit_block(self, node, children):
+        res = children[3]
+        return res if node.children[0].text == "" else not res
+
+    def visit_lop(self, node, _):
+        return node.text.strip()
+
+    def visit_expr(self, _, children):
+        items = self.reduce(children)
+        res = items.pop(0)
+        while len(items) >= 2:
+            match items.pop(0):
+                case "or":
+                    res = res | items.pop(0)
+                case "and":
+                    res = res & items.pop(0)
+        return res
+
+    @staticmethod
+    def reduce(v: list) -> list:
+        return sum(map(_ExpressionVisitor.reduce, v), []) if isinstance(v, list) else [v]
+
+
 class Helper:
     ZCOSMIC_TOPLEVEL_INFO_V1_VERSION = 3
     ZCOSMIC_TOPLEVEL_MANAGER_V1_VERSION = 4
@@ -371,117 +482,8 @@ class Helper:
         Return a list of toplevel windows matching a query.
         @see cosmic_ext_window_helper.conf.__toplevel_query__ for detailed query syntax
         """
-        grammar = Grammar(
-            r"""
-            expr           = (str_test / bool_test / block) (lop (str_test / bool_test / block))*
-            block          = neg? "(" ws expr ws ")"
-            bool_test      = neg? bool_field
-            str_test       = neg? str_field op value
-            op             = ws ("~=" / "!=" / "=") ws
-            str_field      = ~"(app_)?id|title|(output|workspace)\\.name"
-            bool_field     = ~"is_(active(_app_id)?|(min|max)imized|fullscreen|sticky)|output\\.has_focus|workspace\\.(is_visible|has_focus)"
-            value          = single_quoted / double_quoted
-            lop            = ws ("and" / "or") ws
-            neg            = ws "not" ws
-            ws             = ~"\\s*"
-            single_quoted  = ~"'(.*?)(?<!\\\\)'i?"
-            double_quoted  = ~'"(.*?)(?<!\\\\)"i?'
-            """
-        )
-
-        class ExpressionVisitor(NodeVisitor):
-            toplevel: Toplevel
-
-            def __init__(self, toplevel: Toplevel):
-                self.toplevel = toplevel
-
-            def generic_visit(self, node, children):
-                return children or node
-
-            def visit_str_test(self, node, _):
-                neg, field, op, value = node.children
-                field = field.text
-                if field.startswith("output."):
-                    if self.toplevel.output:
-                        field = self.toplevel.output[field.split(".")[1]]
-                    else:
-                        field = ""
-                elif field.startswith("workspace."):
-                    if self.toplevel.workspace:
-                        field = self.toplevel.workspace[field.split(".")[1]]
-                    else:
-                        field = ""
-                else:
-                    field = self.toplevel[field]
-                field = field or ""
-                op = op.text.strip()
-                quote = value.text[0]
-                if value.text[-1] == "i":
-                    value = value.text[1:-2]
-                    re_flags = re.IGNORECASE
-                else:
-                    re_flags = 0
-                    value = value.text[1:-1]
-                value = value.replace("\\" + quote, quote)
-                match op:
-                    case "=":
-                        if re_flags == re.IGNORECASE:
-                            res = field.lower() == value.lower()
-                        else:
-                            res = field == value
-                    case "!=":
-                        if re_flags == re.IGNORECASE:
-                            res = field.lower() != value.lower()
-                        else:
-                            res = field != value
-                    case "~=":
-                        try:
-                            res = bool(regex.search(value, field, flags=re_flags, timeout=0.5))
-                        except TimeoutError:
-                            res = False
-                return res if neg.text == "" else not res
-
-            def visit_bool_test(self, node, _):
-                neg, field = node.children
-                field = field.text
-                if field.startswith("output."):
-                    if self.toplevel.output:
-                        field = self.toplevel.output[field.split(".")[1]]
-                    else:
-                        field = False
-                elif field.startswith("workspace."):
-                    if self.toplevel.workspace:
-                        field = self.toplevel.workspace[field.split(".")[1]]
-                    else:
-                        field = False
-                else:
-                    field = self.toplevel[field]
-                return field if neg.text == "" else not field
-
-            def visit_block(self, node, children):
-                res = children[3]
-                return res if node.children[0].text == "" else not res
-
-            def visit_lop(self, node, _):
-                return node.text.strip()
-
-            def visit_expr(self, _, children):
-                items = self.reduce(children)
-                res = items.pop(0)
-                while len(items) >= 2:
-                    match items.pop(0):
-                        case "or":
-                            res = res | items.pop(0)
-                        case "and":
-                            res = res & items.pop(0)
-                return res
-
-            @staticmethod
-            def reduce(v: list) -> list:
-                return sum(map(ExpressionVisitor.reduce, v), []) if isinstance(v, list) else [v]
-
-        tree = grammar.parse(query)
-        return [x for x in Helper.toplevels.values() if ExpressionVisitor(x).visit(tree)]
+        tree = _QUERY_GRAMMAR.parse(query)
+        return [x for x in Helper.toplevels.values() if _ExpressionVisitor(x).visit(tree)]
 
     def state(self, toplevels: list[Toplevel] = None) -> list[dict]:
         """
