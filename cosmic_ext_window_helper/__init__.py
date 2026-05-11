@@ -1,6 +1,7 @@
 import argparse
 import os
 import re
+import regex
 import sys
 from typing import Any
 from importlib.util import find_spec
@@ -410,12 +411,14 @@ class Helper:
                     field = self.toplevel[field]
                 field = field or ""
                 op = op.text.strip()
+                quote = value.text[0]
                 if value.text[-1] == "i":
                     value = value.text[1:-2]
                     re_flags = re.IGNORECASE
                 else:
                     re_flags = 0
                     value = value.text[1:-1]
+                value = value.replace("\\" + quote, quote)
                 match op:
                     case "=":
                         if re_flags == re.IGNORECASE:
@@ -428,7 +431,10 @@ class Helper:
                         else:
                             res = field != value
                     case "~=":
-                        res = bool(re.search(re.compile(value, re_flags), field))
+                        try:
+                            res = bool(regex.search(value, field, flags=re_flags, timeout=0.5))
+                        except TimeoutError:
+                            res = False
                 return res if neg.text == "" else not res
 
             def visit_bool_test(self, node, _):

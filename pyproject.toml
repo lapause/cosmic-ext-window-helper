@@ -20,7 +20,7 @@ readme = "README.md"
 dynamic = ["version", "description"]
 
 requires-python = ">=3.10"
-dependencies = ["python-wayland==1.0.0", "modshim", "parsimonious"]
+dependencies = ["python-wayland==1.0.0", "modshim", "parsimonious", "regex"]
 
 [project.optional-dependencies]
 dev = ["lxml", "textual"]
