@@ -336,6 +336,7 @@ class CLI:
 
 
 def main():
+    signal.signal(signal.SIGPIPE, signal.SIG_DFL)
     try:
         CLI().run()
     except KeyboardInterrupt:
