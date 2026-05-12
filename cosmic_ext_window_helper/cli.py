@@ -321,8 +321,7 @@ class CLI:
                 for toplevel in toplevels:
                     toplevel.move_to(workspace, output)
             case "interfaces":
-                Helper.interfaces.sort()
-                for interface in Helper.interfaces:
+                for interface in sorted(Helper.interfaces):
                     print(interface)
 
     @staticmethod
