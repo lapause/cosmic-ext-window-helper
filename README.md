@@ -167,13 +167,11 @@ cosmic-ext-window-helper activate "id ~= '8wQWFOaggZD0M2kU1YhvD1A4pzILPTYM|bGppu
   cosmic-ext-window-helper move_to "app_id='com.system76.CosmicTerm' and not (is_maximized or is_fullscreen)" 2 HDMI-1
   ```
 
-- `cosmic-ext-window-helper cycle [-t TIMEOUT] QUERY`
+- `cosmic-ext-window-helper cycle [-b/--backward] [-t TIMEOUT] QUERY`
 
   Cycle through matching windows, bringing them one-by-one into focus at each call. Temporary solution until this feature is natively available, at least for active application (expected in [COSMIC™ Epoch 2](https://blog.system76.com/post/cosmic-epoch-2-and-3-roadmap), see [ticket 961](https://github.com/pop-os/cosmic-settings/issues/961)).
 
-  When first called, the program will activate the first non already active matching window and stay
-idle for the specified `TIMEOUT` (default: 3s). Any subsequent call within timeout will defer to
-the first process which will reset TIMEOUT and activate the next window, allowing looping through matches.
+  When first called, the program will activate the first non already active matching window and stay idle for the specified `TIMEOUT` (default: 3s). Any subsequent call within timeout will defer to the first process which will reset `TIMEOUT` and activate the next window (or the previous one if `-b/--backward` argument is provided), allowing looping through matches.
 
   For example, to cycle through active application windows:
 

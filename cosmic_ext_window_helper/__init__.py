@@ -516,7 +516,7 @@ class Helper:
             raise HelperError(
                 "Dependencies missing, this command needs to be started from `dev` environment.")
         import wayland.parser  # noqa: PLC0415
-        from wayland.__main__ import process_protocols  # noqa: F811, PLC0415
+        from wayland.__main__ import process_protocols  # noqa: PLC0415
         logger.info("Generating Wayland & COSMIC™ protocols data...")
         wayland.parser.REMOTE_PROTOCOL_SOURCES.append({
             "name": "COSMIC™ Protocol Extensions",

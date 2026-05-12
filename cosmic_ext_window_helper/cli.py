@@ -222,7 +222,7 @@ class CLI:
                 if xrd is None:
                     raise HelperError("Unable to access XDG_RUNTIME_DIR environment var.")
                 pidfile = os.open(
-                    os.path.sep.join([xrd, "cosmic-ext-window-helper-cycle.pid"]),
+                    os.path.join(xrd, "cosmic-ext-window-helper-cycle.pid"),
                     os.O_RDWR | os.O_CREAT, 0o644
                 )
                 try:
