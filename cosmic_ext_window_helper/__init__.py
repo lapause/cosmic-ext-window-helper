@@ -369,6 +369,8 @@ class _ExpressionVisitor(NodeVisitor):
                     res = bool(regex.search(value, field, flags=re_flags, timeout=0.5))
                 except TimeoutError:
                     res = False
+                except regex.error as e:
+                    raise HelperError(f"Invalid regex pattern: {value!r}", details=str(e)) from e
         return res if neg.text == "" else not res
 
     def visit_bool_test(self, node, _):
