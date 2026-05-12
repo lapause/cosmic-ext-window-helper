@@ -218,7 +218,13 @@ class CLI:
         debug = False
         match args.action:
             case "cycle":
-                pidfile = os.open(self._pidfile(), os.O_RDWR | os.O_CREAT, 0o644)
+                xrd = os.environ.get("XDG_RUNTIME_DIR")
+                if xrd is None:
+                    raise HelperError("Unable to access XDG_RUNTIME_DIR environment var.")
+                pidfile = os.open(
+                    os.path.sep.join([xrd, "cosmic-ext-window-helper-cycle.pid"]),
+                    os.O_RDWR | os.O_CREAT, 0o644
+                )
                 try:
                     fcntl.flock(pidfile, fcntl.LOCK_EX | fcntl.LOCK_NB)
                 except BlockingIOError:
@@ -327,15 +333,6 @@ class CLI:
     @staticmethod
     def to_bool(v: Any) -> bool:
         return True if v in ["true", "True", "1"] else False
-
-    @staticmethod
-    def _pidfile() -> str:
-        if not hasattr(CLI._pidfile, "file"):
-            xrd = os.environ.get("XDG_RUNTIME_DIR")
-            if xrd is None:
-                raise HelperError("Unable to access XDG_RUNTIME_DIR environment var.")
-            CLI._pidfile.file = os.path.sep.join([xrd, "cosmic-ext-window-helper-cycle.pid"])
-        return CLI._pidfile.file
 
 
 def main():
