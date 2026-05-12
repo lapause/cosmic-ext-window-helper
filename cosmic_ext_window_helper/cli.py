@@ -257,7 +257,7 @@ class CLI:
             try:
                 toplevels = self.helper.match_toplevels(args.query)
             except ParseError as e:
-                raise HelperError("Invalid query syntax.") from e
+                raise HelperError("Invalid query syntax.", details=str(e)) from e
             if not toplevels:
                 logger.error("No match found in current toplevel windows.")
                 sys.exit(10)
