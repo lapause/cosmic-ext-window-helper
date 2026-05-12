@@ -187,6 +187,9 @@ class ToplevelHandle(wayland.ext_foreign_toplevel_handle_v1):
     def on_done(self) -> None:
         self.done = True
 
+    def on_closed(self) -> None:
+        Helper.toplevels.pop(self.object_id, None)
+
 
 @wayland.client.wayland_class("zcosmic_toplevel_handle_v1")
 class ToplevelCosmicHandle(wayland.zcosmic_toplevel_handle_v1):

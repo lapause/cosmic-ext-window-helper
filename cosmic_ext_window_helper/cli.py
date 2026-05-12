@@ -287,6 +287,13 @@ class CLI:
                     sig = signal.sigtimedwait([signal.SIGUSR1, signal.SIGUSR2], args.timeout)
                     if sig is None:
                         break
+                    self.helper.display.dispatch_timeout(0)
+                    self.cycling_toplevels = [
+                        t for t in self.cycling_toplevels
+                        if t.handle.object_id in Helper.toplevels
+                    ]
+                    if not self.cycling_toplevels:
+                        break
                     backward = (sig.si_signo == signal.SIGUSR2)
             case "minimize" | "maximize" | "fullscreen" | "sticky":
                 for toplevel in toplevels:
